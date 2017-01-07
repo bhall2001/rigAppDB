@@ -28,11 +28,53 @@
 
 
 # DECLARE VARIABLES
-global gActiveRecord
-global gDatabaseID
-global gBASEPATH
-global gAPPPATH
-global gEXT
+local sDBBASEPATH
+local sDBAPPPATH
+local sDBEXT
+local sActiveRecord
+local sDatabaseID
+
+/*
+* Get sDBBASEPATH
+*/
+function dbBASEPATH
+   return sDBBASEPATH
+end dbBASEPATH
+
+/*
+* Get sDBAPPPATH
+*/
+function dbAPPPATH
+   return sDBAPPPATH
+end dbAPPPATH
+
+/*
+* Get sDBEXT
+*/
+function dbEXT
+   return sDBEXT
+end dbEXT
+
+/*
+* Get sActiveRecord
+*/
+function dbActiveRecord
+   return sActiveRecord
+end dbActiveRecord
+
+/*
+* Get sDatabaseID
+*/
+function dbDatabaseID
+   return sDatabaseID
+end dbDatabaseID
+
+/*
+* Sets the Database ID
+*/
+command rigSetDatabaseID pID
+   put pID into sDatabaseID
+end rigSetDatabaseID
 
 
 /*----------------------------------------------------------------------
@@ -59,12 +101,12 @@ on libraryStack
    set the itemDelimiter to slash
    get the effective filename of this stack
    put it into tPath
-   put item 1 to -2 of tPath & "/" into gAPPPATH
+   put item 1 to -2 of tPath & "/" into sDBAPPPATH
    put item 1 to -3 of tPath & "/" into gBASEPATH
-   put ".livecodescript" into gEXT
+   put ".livecodescript" into sDBEXT
    
    // Load common library
-   start using gAPPPATH & "rigAppDBCommon" & gEXT
+   start using dbAPPPATH() & "rigAppDBCommon" & dbEXT()
 end libraryStack
 
 
@@ -141,7 +183,7 @@ function rigDB pParams pActiveRecordOverride
    # LOAD THE DB CONFIG FILE IF A DSN STRING WASN'T PASSED
    if (pParams is not a boolean) and (pParams is not a number) and (pParams is not an array) and (offset("://", pParams) = 0) then
       ##require gAPPPATH & "config/database" & gEXT
-      start using gAppPath & "config/database" & gEXT
+      start using dbAPPPATH() & "config/database" & dbEXT()
       
       put rigFetchDBsettingsAll() into tDBsettings
       
@@ -224,32 +266,32 @@ function rigDB pParams pActiveRecordOverride
    # WE NEED TO DYNAMICALLY LOAD THE PROPER LIBRARIES
    # BASED ON WHETHER WE'RE USING THE ACTIVE RECORD LIBRARY OR NOT.
    IF pActiveRecordOverride is TRUE then
-      put TRUE into gActiveRecord
+      put TRUE into sActiveRecord
    end if
-   if gActiveRecord is empty then
-      put TRUE into gActiveRecord
+   if sActiveRecord is empty then
+      put TRUE into sActiveRecord
    end if
    
    # LOAD DATABASE DRIVER LIBRARY
    ##require gBASEPATH & "database/DBdriver" & gEXT
-   start using gBASEPATH & "database/rigAppDBdriver" & gEXT
+   start using dbBASEPATH() & "database/rigAppDBdriver" & dbEXT()
    
    # SET THE DATABASE DRIVER LIBRARY VARIABLES VALUES
    rigDbDriver tParams
    
-   if gActiveRecord is TRUE then
+   if sActiveRecord is TRUE then
       //require gBASEPATH & "database/DBactiveRec" & gEXT
-      start using gBASEPATH & "database/rigAppDBactiveRec" & gEXT
+      start using dbBASEPATH() & "database/rigAppDBactiveRec" & dbEXT()
    end if
    
    //require gBASEPATH & "database/drivers/" & tParams["dbdriver"] & "/" & tParams["dbdriver"] & "Driver" & gEXT
-   start using gBASEPATH & "database/drivers/" & tParams["dbdriver"] & "/" & tParams["dbdriver"] & "Driver" & gEXT
+   start using dbBASEPATH() & "database/drivers/" & tParams["dbdriver"] & "/rigApp" & tParams["dbdriver"] & "Driver" & dbEXT()
    	
    if rigFetchDBdriverSetting("autoinit") is TRUE then
       get rigDbInitialize()
    end if
    
-   return gDatabaseID
+   return sDatabaseID
 end rigDB
 
 

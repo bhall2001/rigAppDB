@@ -107,17 +107,18 @@ end libraryStack
 ----------------------------------------------------------------------
 
 command rigDbDriver pParams
-	if pParams is an array then
-		 repeat for each key tKey in pParams
-			put pParams[tKey] into sDBdriverSettings[tKey]
-
-			if tKey is "connid" then
-				put pParams[tKey] into gDatabaseID
-			end if
-		end repeat
-	end if
-
-	rigLogMessage "debug", "Database Driver Library Loaded"
+   if pParams is an array then
+      repeat for each key tKey in pParams
+         put pParams[tKey] into sDBdriverSettings[tKey]
+         
+         if tKey is "connid" then
+            ##put pParams[tKey] into gDatabaseID
+            rigSetDatabaseID pParams[tKey]
+         end if
+      end repeat
+   end if
+   
+   rigLogMessage "debug", "Database Driver Library Loaded"
 end rigDbDriver
 
 
@@ -203,45 +204,46 @@ end rigSetDBdriverSetting
 ----------------------------------------------------------------------*/
 
 function rigDbInitialize
-	# IF AN EXISTING CONNECTION RESOURCE IS AVAILABLE
-	# THERE IS NO NEED TO CONNECT AND SELECT THE DATABASE
-	if sDBdriverSettings["connid"] is an integer then
-		return TRUE
-	end if
-
-	# ----------------------------------------------------------------
-
-	# CONNECT TO THE DATABASE AND SET THE CONNECTION ID
-	if sDBdriverSettings["pconnect"] is TRUE then
-		-- currently not implemented
-	else
-		put rigDbConnect() into sDBdriverSettings["connid"]
-		put sDBdriverSettings["connid"] into gDatabaseID
-	end if
-
-	# NO CONNECTION RESOURCE?  THROW AN ERROR
-	if sDBdriverSettings["connid"] is not an integer then
-		rigLogMessage "error", "Unable to connect to the database:" && sDBdriverSettings["database"]
-		# ERROR HANDLING
-		if sDBdriverSettings["dbdebug"] is TRUE then
-			rigDbDisplayError "db_unable_to_connect"
-			
-			else if sDBdriverSettings["dbRedirectOnError"] <> empty then
-				rigDbRedirectOnError
-		end if
-
-		return FALSE
-
-		else
-			# WE'VE SELECTED THE DB. Now WE SET THE CHARACTER SET
-			if rigDbSetCharset(sDBdriverSettings["charset"],  sDBdriverSettings["dbcollat"]) is not TRUE then
-				return FALSE
-			else
-				return TRUE
-			end if
-	end if
-
-	return TRUE
+   # IF AN EXISTING CONNECTION RESOURCE IS AVAILABLE
+   # THERE IS NO NEED TO CONNECT AND SELECT THE DATABASE
+   if sDBdriverSettings["connid"] is an integer then
+      return TRUE
+   end if
+   
+   # ----------------------------------------------------------------
+   
+   # CONNECT TO THE DATABASE AND SET THE CONNECTION ID
+   if sDBdriverSettings["pconnect"] is TRUE then
+      -- currently not implemented
+   else
+      put rigDbConnect() into sDBdriverSettings["connid"]
+      ##put sDBdriverSettings["connid"] into gDatabaseID
+      rigSetDatabaseID sDBdriverSettings["connid"]
+   end if
+   
+   # NO CONNECTION RESOURCE?  THROW AN ERROR
+   if sDBdriverSettings["connid"] is not an integer then
+      rigLogMessage "error", "Unable to connect to the database:" && sDBdriverSettings["database"]
+      # ERROR HANDLING
+      if sDBdriverSettings["dbdebug"] is TRUE then
+         rigDbDisplayError "db_unable_to_connect"
+         			
+      else if sDBdriverSettings["dbRedirectOnError"] <> empty then
+         rigDbRedirectOnError
+      end if
+      
+      return FALSE
+      
+   else
+      # WE'VE SELECTED THE DB. Now WE SET THE CHARACTER SET
+      if rigDbSetCharset(sDBdriverSettings["charset"],  sDBdriverSettings["dbcollat"]) is not TRUE then
+         return FALSE
+      else
+         return TRUE
+      end if
+   end if
+   
+   return TRUE
 end rigDbInitialize
 
 
@@ -1828,13 +1830,14 @@ end _rigCacheInit
 ----------------------------------------------------------------------
 
 function _rigCloseDB
-	if sDBdriverSettings["connid"] is an integer then
-		put _rigDbClose(sDBdriverSettings["connid"]) into tResult
-	end if
-	put FALSE into sDBdriverSettings["connid"]
-	put empty into gDatabaseID
-
-	return tResult
+   if sDBdriverSettings["connid"] is an integer then
+      put _rigDbClose(sDBdriverSettings["connid"]) into tResult
+   end if
+   put FALSE into sDBdriverSettings["connid"]
+   ##put empty into gDatabaseID
+   setDatabaseID empty
+   
+   return tResult
 end _rigCloseDB
 
 
